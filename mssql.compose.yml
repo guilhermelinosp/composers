@@ -2,6 +2,7 @@ services:
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: mssql
+    restart: always
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=YourPassword123
@@ -9,7 +10,6 @@ services:
       - "1433:1433"
     networks:
       - mssql_network
-    restart: always
     volumes:
       - mssql_data:/var/opt/mssql
 
