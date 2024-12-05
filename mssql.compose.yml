@@ -1,0 +1,21 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourPassword123
+    ports:
+      - "1433:1433"
+    networks:
+      - mssql_network
+    restart: always
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+networks:
+  mssql_network:
+    driver: bridge
+
+volumes:
+  mssql_data:
