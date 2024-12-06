@@ -12,7 +12,7 @@ services:
     image: docker.io/confluentinc/cp-kafka
     container_name: kafka
     networks:
-      - broker-kafka
+      - kafka_network
     depends_on:
       - zookeeper
     ports:
@@ -29,7 +29,7 @@ services:
     image: docker.io/obsidiandynamics/kafdrop
     container_name: kafdrop
     networks:
-      - broker-kafka
+      - kafka_network
     depends_on:
       - kafka
     ports:
@@ -38,5 +38,5 @@ services:
       KAFKA_BROKERCONNECT: kafka:29092
 
 networks:
-  broker-kafka:
+  kafka_network:
     driver: bridge
