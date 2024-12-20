@@ -1,0 +1,18 @@
+services:
+  nats:
+    restart: always
+    image: docker.io/nats:latest
+    container_name: nats
+    ports:
+      - 4222:4222
+      - 18222:8222
+    environment:
+      - NATS_SERVER_NAME=nats
+      - NATS_USER=admin
+      - NATS_PASS=admin
+    command: ["-js"]
+    network:
+      - nats_network
+
+networks:
+  nats_network:

@@ -3,4 +3,9 @@ services:
     image: docker.io/redis:latest
     container_name: redis
     ports:
-      - "6379:6379"
+      - 16379:6379
+    networks:
+      - redis_network
+
+networks:
+  redis_network:
