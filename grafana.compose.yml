@@ -1,0 +1,23 @@
+services:
+  grafana:
+    image: docker.io/grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_USER=grafana
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    ports:
+      - "13000:3000"
+    networks:
+      - grafana
+      - containers_prometheus
+    volumes:
+      - grafana:/var/lib/grafana
+
+networks:
+  grafana:
+  containers_prometheus:
+    external: true
+
+volumes:
+  grafana:

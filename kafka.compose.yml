@@ -1,6 +1,6 @@
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
+    image: docker.io/confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -8,10 +8,14 @@ services:
     ports:
       - "2181:2181"
     networks:
-      - kafka-network
+      - kafka
+    volumes:
+      - zookeeper_log:/var/lib/zookeeper/log
+      - zookeeper_secrets:/etc/zookeeper/secrets
+      - zookeeper:/var/lib/zookeeper/data
 
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
+    image: docker.io/confluentinc/cp-kafka:7.5.0
     container_name: kafka
     environment:
       KAFKA_BROKER_ID: 1
@@ -27,12 +31,16 @@ services:
       CONFLUENT_METRICS_ENABLE: "false"
       CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
     ports:
-      - "9092:9092"
+      - "19092:9092"
     networks:
-      - kafka-network
+      - kafka
+    volumes:
+      - kafka:/var/lib/kafka/data
+      - kafka_log:/var/log/kafka
+      - kafka_secrets:/etc/kafka/secrets
 
   control-center:
-    image: confluentinc/cp-enterprise-control-center:7.5.0
+    image: docker.io/confluentinc/cp-enterprise-control-center:7.5.0
     container_name: control-center
     environment:
       CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:29092
@@ -43,11 +51,17 @@ services:
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
     ports:
-      - "9021:9021"
+      - "19021:9021"
     networks:
-      - kafka-network
+      - kafka
 
 networks:
-  kafka-network:
-    driver: bridge
+  kafka:
 
+volumes:
+  zookeeper:
+  zookeeper_log:
+  zookeeper_secrets:
+  kafka:
+  kafka_log:
+  kafka_secrets:

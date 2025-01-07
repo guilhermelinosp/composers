@@ -5,11 +5,16 @@ services:
     restart: always
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD="@Nb6&^61*vI50T"
+      - SA_PASSWORD=@123Password
     ports:
       - 11433:1433
     networks:
-      - mssql_network
+      - mssql
+    volumes:
+      - mssql:/var/opt/mssql
 
 networks:
-  mssql_network:
+  mssql:
+
+volumes:
+  mssql:

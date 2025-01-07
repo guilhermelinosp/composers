@@ -1,6 +1,6 @@
 services:
   gitlab:
-    image: gitlab/gitlab-ce:latest
+    image: docker.io/gitlab/gitlab-ce:latest
     container_name: gitlab
     environment:
       GITLAB_OMNIBUS_CONFIG: |
@@ -24,20 +24,22 @@ services:
       - gitlab_network
     restart: always
 
-  gitlab-runner:
-    image: gitlab/gitlab-runner:latest
-    container_name: gitlab-runner
-    environment:
-      RUNNER_NAME: "docker-gitlab-runner"
-    networks:
-      - gitlab_network
-    volumes:
-      - gitlab_runner:/etc/gitlab-runner
-      - /var/run/docker.sock:/var/run/docker.sock
-    restart: always
+gitlab-runner:
+  image: docker.io/gitlab/gitlab-runner:latest
+  container_name: gitlab-runner
+  environment:
+    RUNNER_NAME: "docker-gitlab-runner"
+  networks:
+    - gitlab_network
+  volumes:
+    - gitlab_runner:/etc/gitlab-runner
+    - /var/run/docker.sock:/var/run/docker.sock
+  restart: always
+  user: "root"
+  privileged: true
 
   gitlab-postgres:
-    image: postgres:alpine
+    image: docker.io/postgres:alpine
     container_name: gitlab-postgres
     environment:
       POSTGRES_USER: gitlab
@@ -52,7 +54,6 @@ services:
 
 networks:
   gitlab_network:
-    driver: bridge
 
 volumes:
   gitlab_config:

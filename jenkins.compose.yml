@@ -1,13 +1,20 @@
 services:
   jenkins:
-    image: docker.io/jenkins/jenkins:lts
-    restart: always
+    image: docker.io/jenkins/jenkins:alpine
     container_name: jenkins
+    restart: always
     ports:
       - "18080:8080"
       - "50000:50000"
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+    volumes:
+      - jenkins:/var/jenkins_home
+    networks:
+      jenkins:
 
 networks:
-  jenkins_network:
+  jenkins:
+
+volumes:
+  jenkins:

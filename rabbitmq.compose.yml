@@ -9,8 +9,13 @@ services:
     ports:
       - 15672:15672
       - 5672:5672
-    network:
-      - rabbitmq_network
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    networks:
+      - rabbitmq
 
 networks:
-  rabbitmq_network:
+  rabbitmq:
+
+volumes:
+  rabbitmq:

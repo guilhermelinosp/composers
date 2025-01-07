@@ -1,16 +1,19 @@
 services:
   mysql:
-    image: docker.io/mysql:8.0
-    restart: always
+    image: docker.io/library/mysql:8.0
     container_name: mysql
+    restart: always
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_USER=mysql
-      - MYSQL_PASSWORD=mysql
+      - MYSQL_ROOT_PASSWORD="@Nb6&^61*vI50T"
     ports:
       - 13306:3306
     networks:
-      - mysql_network
+      - mysql
+    volumes:
+      - mysql:/var/lib/mysql
 
 networks:
-  mysql_network:
+  mysql:
+
+volumes:
+  mysql:
