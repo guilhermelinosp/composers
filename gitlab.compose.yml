@@ -2,6 +2,7 @@ services:
   gitlab:
     image: docker.io/gitlab/gitlab-ce:latest
     container_name: gitlab
+    restart: always
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         postgresql['enable'] = true
@@ -21,12 +22,12 @@ services:
       - gitlab_postgres
       - gitlab_runner
     networks:
-      - gitlab_network
-    restart: always
+      - gitlab
 
 gitlab-runner:
   image: docker.io/gitlab/gitlab-runner:latest
   container_name: gitlab-runner
+  restart: always
   environment:
     RUNNER_NAME: "docker-gitlab-runner"
   networks:
@@ -34,13 +35,13 @@ gitlab-runner:
   volumes:
     - gitlab_runner:/etc/gitlab-runner
     - /var/run/docker.sock:/var/run/docker.sock
-  restart: always
   user: "root"
   privileged: true
 
   gitlab-postgres:
     image: docker.io/postgres:alpine
     container_name: gitlab-postgres
+    restart: always
     environment:
       POSTGRES_USER: gitlab
       POSTGRES_PASSWORD: gitlab
@@ -49,11 +50,10 @@ gitlab-runner:
     volumes:
       - gitlab_postgresql:/var/lib/postgresql/data/pgdata
     networks:
-      - gitlab_network
-    restart: always
+      - gitlab
 
 networks:
-  gitlab_network:
+  gitlab:
 
 volumes:
   gitlab_config:

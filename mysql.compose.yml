@@ -4,7 +4,7 @@ services:
     container_name: mysql
     restart: always
     environment:
-      - MYSQL_ROOT_PASSWORD="@Nb6&^61*vI50T"
+      - MYSQL_ROOT_PASSWORD=o90h5ErAIeozNC
     ports:
       - 13306:3306
     networks:

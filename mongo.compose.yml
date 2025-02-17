@@ -2,10 +2,15 @@ services:
   mongo:
     image: docker.io/mongo:latest
     container_name: mongo
+    restart: always
     ports:
       - 17017:27017
+    volumes:
+      - mongo:/data/db
     networks:
-      - mongo_network
-
+      - mongo
 networks:
-  mongo_network:
+  mongo:
+
+volumes:
+  mongo:
