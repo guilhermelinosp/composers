@@ -1,0 +1,63 @@
+services:
+  prometheus:
+    image: docker.io/prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+    ports:
+      - "19090:9090"
+    networks:
+      - prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+      - "--storage.tsdb.retention.time=30d"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.lan`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+
+  alertmanager:
+    image: docker.io/prom/alertmanager:latest
+    container_name: alertmanager
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager:/alertmanager
+    ports:
+      - "19093:9093"
+    networks:
+      - prometheus
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alertmanager.rule=Host(`alertmanager.lan`)"
+      - "traefik.http.routers.alertmanager.entrypoints=websecure"
+
+networks:
+  prometheus:
+    driver: bridge
+
+volumes:
+  prometheus:
+  alertmanager:

@@ -1,20 +1,33 @@
 services:
   jenkins:
-    image: docker.io/jenkins/jenkins:alpine
+    image: jenkins/jenkins:alpine
     container_name: jenkins
-    restart: always
+    restart: unless-stopped
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx2g -Xms1g
+      - JENKINS_OPTS=--httpPort=8080
     ports:
       - "18080:8080"
       - "50000:50000"
-    environment:
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
     volumes:
       - jenkins:/var/jenkins_home
     networks:
-      jenkins:
+      - jenkins
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
 
 networks:
   jenkins:
+    driver: bridge
 
 volumes:
   jenkins:

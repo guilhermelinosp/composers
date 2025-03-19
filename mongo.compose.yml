@@ -1,16 +1,44 @@
 services:
   mongo:
-    image: docker.io/mongo:latest
+    image: mongo:7-alpine
     container_name: mongo
-    restart: always
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-mongo}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-qE5KbNSV3sIp15}
     ports:
-      - 17017:27017
+      - "27017:27017"
     volumes:
       - mongo:/data/db
     networks:
       - mongo
+    command: ["mongod", "--auth"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--eval",
+          "db.runCommand('ping').ok",
+          "--quiet",
+          "-u",
+          "${MONGO_USER:-mongo}",
+          "-p",
+          "${MONGO_PASSWORD:-qE5KbNSV3sIp15}",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
 networks:
   mongo:
+    driver: bridge
 
 volumes:
   mongo:

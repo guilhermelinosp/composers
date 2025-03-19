@@ -1,20 +1,26 @@
 services:
   postgres:
-    image: docker.io/library/postgres:14.15-alpine
+    image: postgres:16.4-alpine
     container_name: postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      - POSTGRES_PASSWORD="@Nb6&^61*vI50T"
-      - POSTGRES_USER=postgres
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-x9h7ycv2d2MtDS}
     ports:
-      - 15432:5432
+      - "5432:5432"
     networks:
       - postgres
     volumes:
       - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-postgres}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
 networks:
   postgres:
+    driver: bridge
 
 volumes:
   postgres:

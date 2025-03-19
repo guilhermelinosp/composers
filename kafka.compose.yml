@@ -1,70 +1,119 @@
 services:
   zookeeper:
-    image: docker.io/confluentinc/cp-zookeeper:7.5.0
+    image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
-    restart: always
+    restart: unless-stopped
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 10000
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=10000
+      - ZOOKEEPER_SERVER_ID=1
     ports:
       - "2181:2181"
     networks:
       - kafka
     volumes:
-      - zookeeper_log:/var/lib/zookeeper/log
-      - zookeeper_secrets:/etc/zookeeper/secrets
       - zookeeper:/var/lib/zookeeper/data
+      - zookeeper:/var/lib/zookeeper/log
+      - zookeeper:/etc/zookeeper/secrets
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bash",
+          "-c",
+          "echo 'ruok' | nc -w 2 localhost 2181 | grep imok",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   kafka:
-    image: docker.io/confluentinc/cp-kafka:7.5.0
+    image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
-    restart: always
+    restart: unless-stopped
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092,OUTSIDE://localhost:9094
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      CONFLUENT_METRICS_ENABLE: "false"
-      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,OUTSIDE:PLAINTEXT
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:19092,OUTSIDE://localhost:9094
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_JVM_PERFORMANCE_OPTS=-Xms1g -Xmx2g
     ports:
-      - "19092:9092"
+      - "19092:19092"
+      - "9094:9094"
     networks:
       - kafka
     volumes:
       - kafka:/var/lib/kafka/data
-      - kafka_log:/var/log/kafka
-      - kafka_secrets:/etc/kafka/secrets
+      - kafka:/var/log/kafka
+      - kafka:/etc/kafka/secrets
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "kafka-topics.sh",
+          "--bootstrap-server",
+          "localhost:19092",
+          "--list",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
 
   control-center:
-    image: docker.io/confluentinc/cp-enterprise-control-center:7.5.0
+    image: confluentinc/cp-enterprise-control-center:7.5.0
     container_name: control-center
-    restart: always
+    restart: unless-stopped
     environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:29092
-      CONTROL_CENTER_ZOOKEEPER_CONNECT: zookeeper:2181
-      CONTROL_CENTER_LISTENERS: http://0.0.0.0:9021
-      CONTROL_CENTER_REPLICATION_FACTOR: 1
-      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
-      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      - CONTROL_CENTER_BOOTSTRAP_SERVERS=kafka:29092
+      - CONTROL_CENTER_ZOOKEEPER_CONNECT=zookeeper:2181
+      - CONTROL_CENTER_LISTENERS=http://0.0.0.0:9021
+      - CONTROL_CENTER_REPLICATION_FACTOR=1
+      - CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS=1
+      - CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS=1
+      - CONFLUENT_METRICS_TOPIC_REPLICATION=1
+      - CONTROL_CENTER_JVM_OPTS=-Xms512m -Xmx1g
     ports:
       - "19021:9021"
     networks:
       - kafka
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9021/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
 networks:
   kafka:
+    driver: bridge
 
 volumes:
   zookeeper:
-  zookeeper_log:
-  zookeeper_secrets:
   kafka:
-  kafka_log:
-  kafka_secrets:

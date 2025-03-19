@@ -1,40 +1,66 @@
 services:
   keycloak_postgres:
-    image: postgres:13
+    image: postgres:13-alpine
     container_name: keycloak_postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=${POSTGRES_USER:-keycloak}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-61tVz2p6fsq4N7}
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - keycloak_postgres:/var/lib/postgresql/data
+      - keycloak_postgres:/var/lib/postgresql/data/pgdata
     networks:
       - keycloak
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-keycloak}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
-    restart: always
+    restart: unless-stopped
     environment:
-      DB_VENDOR: postgres
-      DB_ADDR: postgres
-      DB_DATABASE: keycloak
-      DB_USER: keycloak
-      DB_PASSWORD: keycloak
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      - DB_VENDOR=postgres
+      - DB_ADDR=keycloak_postgres
+      - DB_DATABASE=keycloak
+      - DB_USER=${POSTGRES_USER:-keycloak}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-keycloak}
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-keycloak}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-61tVz2p6fsq4N7}
+      - JAVA_OPTS=-Xms512m -Xmx1g
     ports:
       - "18080:8080"
     depends_on:
-      - keycloak_postgres
+      keycloak_postgres:
+        condition: service_healthy
     networks:
       - keycloak
     command:
       - start-dev
-
-volumes:
-  keycloak_postgres:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
 networks:
   keycloak:
+    driver: bridge
+
+volumes:
+  keycloak_postgres:

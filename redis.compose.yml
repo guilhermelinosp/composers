@@ -1,18 +1,40 @@
 services:
   redis:
-    image: docker.io/redis:latest
+    image: redis:alpine
     container_name: redis
-    restart: always
+    restart: unless-stopped
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-k5mWDQlEck9b61}
     ports:
-      - 16379:6379
+      - "16379:6379"
     networks:
       - redis
     volumes:
       - redis:/data
+    command:
+      [
+        "redis-server",
+        "--requirepass",
+        "${REDIS_PASSWORD:-k5mWDQlEck9b61}",
+        "--maxmemory",
+        "512mb",
+      ]
+    healthcheck:
+      test:
+        ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-k5mWDQlEck9b61}", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
 networks:
   redis:
+    driver: bridge
 
 volumes:
   redis:
-

@@ -1,53 +1,74 @@
-networks:
-  n8n:
-
-volumes:
-  n8n:
-  n8n_postgres:
-
 services:
-  postgres:
-    image: postgres:alpine
+  n8n-postgres:
+    image: postgres:16-alpine
     container_name: n8n-postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: n8n
-      POSTGRES_PASSWORD: n8npassword
-      POSTGRES_DB: n8n
+      - POSTGRES_USER=${POSTGRES_USER:-n8n}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-n8n}
+      - POSTGRES_DB=${POSTGRES_DB:-n8n}
+      - PGDATA=/var/lib/postgresql/data/pgdata
     networks:
       - n8n
     volumes:
-      - n8n_postgres:/var/lib/postgresql/data
+      - n8n-postgres:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-n8n}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   n8n:
     image: n8nio/n8n:latest
     container_name: n8n
-    restart: always
+    restart: unless-stopped
     ports:
       - "5678:5678"
     environment:
-      # Configurações do banco de dados
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_HOST=n8n-postgres
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=n8n
-      - DB_POSTGRESDB_USER=n8n
-      - DB_POSTGRESDB_PASSWORD=n8npassword
-
-      # Autenticação básica
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-n8n}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-n8n}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD:-n8n}
       - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=securepassword
-
-      # Configurações diversas
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-n8n}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-7R1yBT9bRu30qV}
       - N8N_USER_FOLDER=/home/node/.n8n
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=30
       - GENERIC_TIMEZONE=America/Sao_Paulo
       - N8N_SECURE_COOKIE=false
+      - NODE_OPTIONS=--max-old-space-size=2048
     networks:
       - n8n
     depends_on:
-      - postgres
+      n8n-postgres:
+        condition: service_healthy
     volumes:
       - n8n:/home/node/.n8n
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+networks:
+  n8n:
+    driver: bridge
+
+volumes:
+  n8n:
+  n8n-postgres:

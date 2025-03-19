@@ -1,0 +1,36 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.46
+    container_name: jaeger
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - MEMORY_MAX_TRACES=50000
+      - LOG_LEVEL=info
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "16686:16686"
+      - "14268:14268"
+    volumes:
+      - jaeger:/tmp
+    networks:
+      - jaeger
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:16686"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+networks:
+  jaeger:
+    driver: bridge
+
+volumes:
+  jaeger:
