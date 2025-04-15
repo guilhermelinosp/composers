@@ -33,7 +33,6 @@ services:
 
 networks:
   mssql:
-    driver: bridge
 
 volumes:
   mssql:

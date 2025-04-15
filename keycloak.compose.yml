@@ -1,17 +1,17 @@
 services:
-  keycloak_postgres:
-    image: postgres:13-alpine
-    container_name: keycloak_postgres
+  keycloak-postgres:
+    image: postgres:16-alpine
+    container_name: keycloak-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=keycloak
       - POSTGRES_USER=${POSTGRES_USER:-keycloak}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-61tVz2p6fsq4N7}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-keycloak}
+      - POSTGRES_DB=keycloak
       - PGDATA=/var/lib/postgresql/data/pgdata
-    volumes:
-      - keycloak_postgres:/var/lib/postgresql/data/pgdata
     networks:
       - keycloak
+    volumes:
+      - keycloak-postgres:/var/lib/postgresql/data/pgdata
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-keycloak}"]
       interval: 30s
@@ -30,22 +30,21 @@ services:
     restart: unless-stopped
     environment:
       - DB_VENDOR=postgres
-      - DB_ADDR=keycloak_postgres
+      - DB_ADDR=keycloak-postgres
       - DB_DATABASE=keycloak
       - DB_USER=${POSTGRES_USER:-keycloak}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-keycloak}
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-keycloak}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-61tVz2p6fsq4N7}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-3y6kdy6A0a1HMr}
       - JAVA_OPTS=-Xms512m -Xmx1g
     ports:
-      - "18080:8080"
-    depends_on:
-      keycloak_postgres:
-        condition: service_healthy
+      - "8080:8080"
     networks:
       - keycloak
-    command:
-      - start-dev
+    depends_on:
+      keycloak-postgres:
+        condition: service_healthy
+    command: ["start-dev"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
       interval: 30s
@@ -63,4 +62,4 @@ networks:
     driver: bridge
 
 volumes:
-  keycloak_postgres:
+  keycloak-postgres:

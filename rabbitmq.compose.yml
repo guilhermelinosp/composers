@@ -15,17 +15,6 @@ services:
       - rabbitmq:/var/lib/rabbitmq
     networks:
       - rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
 
 networks:
   rabbitmq:

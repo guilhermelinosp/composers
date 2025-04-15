@@ -16,12 +16,6 @@ services:
     command: server -dev
     cap_add:
       - IPC_LOCK
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8200/v1/sys/health"]
-      interval: 30s
-      retries: 3
-      timeout: 10s
-      start_period: 10s
 
 volumes:
   vault:

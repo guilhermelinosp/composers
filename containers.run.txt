@@ -1,0 +1,64 @@
+docker run -d \
+--name mongo \
+--restart unless-stopped \
+-e MONGO_INITDB_ROOT_USERNAME=mongo \
+-e MONGO_INITDB_ROOT_PASSWORD=qE5KbNSV3sIp15 \
+-p 27017:27017 \
+mongo mongod --auth
+  
+  
+docker run -d \
+--name rabbitmq \
+--restart unless-stopped \
+-e RABBITMQ_DEFAULT_USER=rabbit \
+-e RABBITMQ_DEFAULT_PASS=U4W72RW7Vs0Pxb \
+-p 15672:15672 \
+-p 15692:15692 \
+-p 5672:5672 \
+rabbitmq:4.0-management-alpine
+  
+  
+docker run -d \
+--name mssql \
+--restart unless-stopped \
+-e "ACCEPT_EULA=Y" \
+-e "MSSQL_SA_PASSWORD=KmU2o7L1KOopRu" \
+-e "MSSQL_PID=Express" \
+-p 1433:1433 \
+mcr.microsoft.com/mssql/server:2022-latest
+
+
+docker run -d \
+--name redis \
+--restart unless-stopped \
+-e REDIS_PASSWORD=k5mWDQlEck9b61 \
+-p 6379:6379 \
+redis:alpine \
+redis-server --requirepass k5mWDQlEck9b61
+
+
+docker run -d \
+--name consul \
+--restart unless-stopped \
+-e CONSUL_LOCAL_CONFIG='{"datacenter":"cn1","node_name":"cn1"}' \
+-p 8500:8500 \
+-p 8600:8600/udp \
+-p 8300:8300 \
+hashicorp/consul:latest \
+agent \
+-server \
+-ui \
+-node=cn1 \
+-bootstrap-expect=1 \
+-client=0.0.0.0
+
+docker run -d \
+--name vault \
+--restart unless-stopped \
+--cap-add IPC_LOCK \
+-e VAULT_DEV_ROOT_TOKEN_ID=vault \
+-e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 \
+-e VAULT_DEV_SERVER_MODE=true \
+-p 8200:8200 \
+hashicorp/vault:latest \
+server -dev
